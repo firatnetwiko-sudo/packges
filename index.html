@@ -122,7 +122,7 @@
             </div>
         </section>
 
-        <!-- 3. SUBSCRIBER PROFILE TAB بروفايل المشترك التفصيلي والمحاسبي المحدث -->
+        <!-- 3. SUBSCRIBER PROFILE TAB -->
         <section id="sub-profile" class="tab-content hidden space-y-6">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div>
@@ -132,7 +132,6 @@
                 <button onclick="switchTab('view-subscribers')" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300">العودة للقائمة</button>
             </div>
 
-            <!-- بطاقات معلومات المشترك المنفصلة -->
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <span class="text-xs text-slate-500 block">رقم الهاتف</span>
@@ -157,7 +156,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- سيكشن تغذية الحزمة من البريد -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
                         <span>تغذية الحزمة من البريد</span>
@@ -176,7 +174,6 @@
                     </table>
                 </div>
 
-                <!-- سيكشن سجل الدفعات والمستحقات مع إضافة عمود العمليات -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
                         <span>سجل الدفعات والمستحقات</span>
@@ -263,14 +260,14 @@
             </div>
         </section>
 
-        <!-- FORM ADD/EDIT VOUCHER -->
+        <!-- FORM ADD/EDIT VOUCHER المحدث بالربط التفاعلي للقبض والدفع -->
         <section id="add-voucher" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="voucher-form-title">إضافة سند قبض / دفع</h2>
             <form id="form-add-voucher" onsubmit="handleSaveVoucher(event)" class="space-y-4">
                 <input type="hidden" id="edit-voucher-id">
                 <div>
                     <label class="block text-sm font-medium mb-1">نوع السند</label>
-                    <select required id="voucher-type" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <select required id="voucher-type" onchange="toggleVoucherLinkOptions()" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                         <option value="قبض">سند قبض (إيراد / سداد مشتركي)</option>
                         <option value="دفع">سند دفع (مصروف)</option>
                     </select>
@@ -279,12 +276,23 @@
                     <label class="block text-sm font-medium mb-1">الصندوق المستهدف</label>
                     <select required id="voucher-cashbox-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
                 </div>
-                <div>
+
+                <!-- خانة الربط مع مشترك (تظهر عند اختيار سند قبض) -->
+                <div id="voucher-sub-container">
                     <label class="block text-sm font-medium mb-1">ربط مع مشترك (اختياري)</label>
                     <select id="voucher-sub-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                         <option value="">-- بدون ربط بمشترك --</option>
                     </select>
                 </div>
+
+                <!-- خانة الربط مع بريد (تظهر عند اختيار سند دفع لإثبات الفواتير) -->
+                <div id="voucher-post-container" class="hidden">
+                    <label class="block text-sm font-medium mb-1">ربط مع فرع البريد (اختياري - سداد فاتورة)</label>
+                    <select id="voucher-post-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="">-- بدون ربط بفرع بريد --</option>
+                    </select>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium mb-1">المبلغ</label>
                     <input type="number" step="0.01" required id="voucher-amount" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
@@ -446,7 +454,7 @@
 
     </main>
 
-    <!-- JavaScript - إدارة بروفايل المشترك والعمليات المحاسبية -->
+    <!-- JavaScript - المحرك البرمجي وإدارة السندات التفاعلية -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -515,6 +523,7 @@
             populateDropdowns();
             renderTables();
             renderDashboard();
+            toggleVoucherLinkOptions();
         };
 
         function populateDropdowns() {
@@ -533,12 +542,34 @@
                 subVoucherSelect.innerHTML = `<option value="">-- بدون ربط بمشترك --</option>` + systemData.subscribers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             }
 
+            const postVoucherSelect = document.getElementById('voucher-post-select');
+            if (postVoucherSelect) {
+                postVoucherSelect.innerHTML = `<option value="">-- بدون ربط بفرع بريد --</option>` + systemData.posts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            }
+
             const upSubSelect = document.getElementById('upgrade-sub-select');
             if(upSubSelect) {
                 upSubSelect.innerHTML = systemData.subscribers.map(s => {
                     const totalMb = (s.feeds || []).reduce((sum, f) => sum + (f.packageMb || 0), 0);
                     return `<option value="${s.id}">${s.name} (${totalMb} Mbps)</option>`;
                 }).join('');
+            }
+        }
+
+        // إظهار/إخفاء خانة المشترك أو البريد حسب نوع السند
+        function toggleVoucherLinkOptions() {
+            const voucherType = document.getElementById('voucher-type').value;
+            const subContainer = document.getElementById('voucher-sub-container');
+            const postContainer = document.getElementById('voucher-post-container');
+
+            if (voucherType === 'قبض') {
+                subContainer.classList.remove('hidden');
+                postContainer.classList.add('hidden');
+                document.getElementById('voucher-post-select').value = '';
+            } else {
+                subContainer.classList.add('hidden');
+                postContainer.classList.remove('hidden');
+                document.getElementById('voucher-sub-select').value = '';
             }
         }
 
@@ -674,19 +705,29 @@
                     </tr>
                 `).join('');
 
-            // Vouchers Table
+            // Vouchers Table مع توضيح جهة الربط (مشترك أو بريد)
             const voucherBody = document.getElementById('table-vouchers-body');
             voucherBody.innerHTML = systemData.vouchers.length === 0 ?
                 `<tr><td colspan="6" class="text-center p-4 text-slate-400">لا يوجد سندات قبض أو دفع مسجلة حالياً</td></tr>` :
                 systemData.vouchers.map(v => {
                     const cashbox = systemData.cashBoxes.find(c => c.id === v.cashboxId);
                     const isReceipt = v.type === 'قبض';
+                    
+                    let linkedEntity = v.description;
+                    if (v.subId) {
+                        const sub = systemData.subscribers.find(s => s.id === v.subId);
+                        if (sub) linkedEntity += ` (مشترك: ${sub.name})`;
+                    } else if (v.postId) {
+                        const post = systemData.posts.find(p => p.id === v.postId);
+                        if (post) linkedEntity += ` (بريد: ${post.name})`;
+                    }
+
                     return `
                         <tr>
                             <td class="p-2"><span class="px-2 py-1 rounded text-xs font-bold ${isReceipt ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${v.type}</span></td>
                             <td class="p-2">${cashbox ? cashbox.name : '-'}</td>
                             <td class="p-2 font-bold ${isReceipt ? 'text-emerald-600' : 'text-rose-600'}">${v.amount} ${cashbox ? cashbox.currency : ''}</td>
-                            <td class="p-2">${v.description}</td>
+                            <td class="p-2">${linkedEntity}</td>
                             <td class="p-2 text-slate-500">${v.date}</td>
                             <td class="p-2 space-x-2 space-x-reverse">
                                 <button onclick="editVoucher(${v.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -697,7 +738,6 @@
                 }).join('');
         }
 
-        // عرض بروفايل المشترك وحساب الخانات المنفصلة
         function viewSubscriberProfile(subId) {
             const sub = systemData.subscribers.find(s => s.id === subId);
             if (!sub) return;
@@ -705,18 +745,14 @@
             const proj = systemData.projects.find(p => p.id === sub.projectId);
             const feeds = sub.feeds || [];
 
-            // 1. حساب إجمالي الحزمة وإيراد الحزمة الكلي
             const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
             const totalMonthlyRevenue = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
 
-            // 2. حساب إجمالي المدفوع من السندات المربوطة بالمشترك
             const subVouchers = systemData.vouchers.filter(v => v.subId === subId);
             const totalPaid = subVouchers.filter(v => v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
 
-            // 3. حساب باقي الدين = إيراد الحزمة الكلي - إجمالي المدفوع
             const remainingDebt = totalMonthlyRevenue - totalPaid;
 
-            // تعبئة البيانات المنفصلة في الخانات العلوية
             document.getElementById('prof-sub-name').innerText = sub.name;
             document.getElementById('prof-sub-project').innerText = proj ? proj.name : '';
             document.getElementById('prof-sub-phone').innerText = sub.phone;
@@ -725,7 +761,6 @@
             document.getElementById('prof-sub-paid').innerText = `$${totalPaid.toFixed(2)}`;
             document.getElementById('prof-sub-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
-            // جدول تغذية الحزمة من البريد
             const pkgList = document.getElementById('prof-sub-packages-list');
             pkgList.innerHTML = feeds.map(f => {
                 const post = systemData.posts.find(p => p.id === f.postId);
@@ -740,7 +775,6 @@
                 `;
             }).join('');
 
-            // جدول سجل الدفعات والمستحقات مع أزرار التعديل والحذف لكل سند
             const payList = document.getElementById('prof-sub-payments-list');
             payList.innerHTML = subVouchers.length === 0 ? 
                 `<tr><td colspan="5" class="text-center p-3 text-slate-400">لا يوجد دفعات مسجلة للمشترك</td></tr>` :
@@ -764,18 +798,23 @@
             if (confirm('هل أنت تأكد من حذف هذا السند؟')) {
                 systemData.vouchers = systemData.vouchers.filter(v => v.id !== voucherId);
                 saveDataToStorage();
-                viewSubscriberProfile(subId); // إعادة تحديث البروفايل تلقائياً
+                viewSubscriberProfile(subId);
             }
         }
 
-        // Vouchers Handlers
+        // Vouchers Handlers مع إدارة الربط للقبض والدفع
         function handleSaveVoucher(e) {
             e.preventDefault();
             const id = document.getElementById('edit-voucher-id').value;
             const type = document.getElementById('voucher-type').value;
             const cashboxId = parseInt(document.getElementById('voucher-cashbox-select').value);
+            
             const subIdVal = document.getElementById('voucher-sub-select').value;
-            const subId = subIdVal ? parseInt(subIdVal) : null;
+            const subId = (type === 'قبض' && subIdVal) ? parseInt(subIdVal) : null;
+
+            const postIdVal = document.getElementById('voucher-post-select').value;
+            const postId = (type === 'دفع' && postIdVal) ? parseInt(postIdVal) : null;
+
             const amount = parseFloat(document.getElementById('voucher-amount').value);
             const description = document.getElementById('voucher-description').value;
             const date = document.getElementById('voucher-date').value;
@@ -785,6 +824,7 @@
                 voucher.type = type;
                 voucher.cashboxId = cashboxId;
                 voucher.subId = subId;
+                voucher.postId = postId;
                 voucher.amount = amount;
                 voucher.description = description;
                 voucher.date = date;
@@ -794,6 +834,7 @@
                     type,
                     cashboxId,
                     subId,
+                    postId,
                     amount,
                     description,
                     date
@@ -815,8 +856,12 @@
             if (!v) return;
             document.getElementById('edit-voucher-id').value = v.id;
             document.getElementById('voucher-type').value = v.type;
+            
+            toggleVoucherLinkOptions();
+
             document.getElementById('voucher-cashbox-select').value = v.cashboxId;
             document.getElementById('voucher-sub-select').value = v.subId || '';
+            document.getElementById('voucher-post-select').value = v.postId || '';
             document.getElementById('voucher-amount').value = v.amount;
             document.getElementById('voucher-description').value = v.description;
             document.getElementById('voucher-date').value = v.date;
@@ -1136,9 +1181,11 @@
             const voucherData = systemData.vouchers.map(v => {
                 const cb = systemData.cashBoxes.find(c => c.id === v.cashboxId);
                 const sub = systemData.subscribers.find(s => s.id === v.subId);
+                const post = systemData.posts.find(p => p.id === v.postId);
                 return {
                     "نوع السند": v.type,
                     "المشترك": sub ? sub.name : '-',
+                    "فرع البريد": post ? post.name : '-',
                     "الصندوق": cb ? cb.name : '',
                     "المبلغ": v.amount,
                     "الجهة / البيان": v.description,
