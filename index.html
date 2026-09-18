@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة تثبيت الحزم والمحاسبة</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS CDN للتصدير إلى Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+
+    <!-- Sidebar القائمة الجانبية -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between p-4 shadow-lg shrink-0">
+        <div class="overflow-y-auto">
+            <div class="flex items-center gap-3 mb-6 px-2">
+                <i class="fa-solid fa-network-wired text-amber-500 text-2xl"></i>
+                <h1 class="font-bold text-base leading-tight">سيستم تثبيت الحزم والمحاسبة</h1>
+            </div>
+            
+            <nav class="space-y-1">
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition active bg-amber-500 text-slate-950 font-bold" id="btn-dashboard">
+                    <i class="fa-solid fa-chart-line w-5"></i> لوحة التحكم
+                </button>
+
+                <div class="pt-2 pb-1 text-xs text-slate-400 font-bold px-3">عرض السجلات والبيانات</div>
+                <button onclick="switchTab('view-subscribers')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-view-subscribers">
+                    <i class="fa-solid fa-users w-5 text-amber-400"></i> قائمة المشتركين
+                </button>
+                <button onclick="switchTab('view-posts')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-view-posts">
+                    <i class="fa-solid fa-building-user w-5 text-sky-400"></i> قائمة فروع البريد
+                </button>
+                <button onclick="switchTab('view-projects')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-view-projects">
+                    <i class="fa-solid fa-diagram-project w-5 text-emerald-400"></i> قائمة المشاريع
+                </button>
+                <button onclick="switchTab('view-vouchers')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-view-vouchers">
+                    <i class="fa-solid fa-receipt w-5 text-purple-400"></i> سندات القبض والدفع
+                </button>
+
+                <div class="pt-2 pb-1 text-xs text-slate-400 font-bold px-3">الإدخال والعمليات</div>
+                <button onclick="switchTab('add-project')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-add-project">
+                    <i class="fa-solid fa-folder-plus w-5"></i> إضافة مشروع
+                </button>
+                <button onclick="switchTab('add-post')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-add-post">
+                    <i class="fa-solid fa-mail-bulk w-5"></i> إضافة فرع بريد
+                </button>
+                <button onclick="switchTab('add-subscriber')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-add-subscriber">
+                    <i class="fa-solid fa-user-plus w-5"></i> إضافة زبون جديد
+                </button>
+                <button onclick="switchTab('add-voucher')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-add-voucher">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-purple-400"></i> إضافة سند جديد
+                </button>
+                <button onclick="switchTab('add-cashbox')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-add-cashbox">
+                    <i class="fa-solid fa-box-archive w-5 text-emerald-400"></i> إضافة صندوق مال
+                </button>
+                <button onclick="switchTab('upgrade-package')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300 transition" id="btn-upgrade-package">
+                    <i class="fa-solid fa-arrow-up-right-dots w-5 text-amber-400"></i> رفع حزمة مشترك
+                </button>
+            </nav>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 mt-2 space-y-2">
+            <button onclick="exportMonthlyReport()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 shadow transition text-sm">
+                <i class="fa-solid fa-file-excel"></i> إنشاء التقرير الشهري
+            </button>
+            <button onclick="clearAllData()" class="w-full bg-rose-900/60 hover:bg-rose-800 text-rose-200 font-bold py-1.5 px-3 rounded-lg flex items-center justify-center gap-2 transition text-xs">
+                <i class="fa-solid fa-trash-can"></i> تفريغ ذاكرة الجهاز
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area المنطقة الرئيسية -->
+    <main class="flex-1 overflow-y-auto p-6">
+
+        <!-- 1. DASHBOARD TAB لوحة التحكم -->
+        <section id="dashboard" class="tab-content space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800">لوحة التحكم الرئيسية</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="dashboard-widgets"></div>
+        </section>
+
+        <!-- 2. VIEW SUBSCRIBERS TAB مشاهدة وإدارة المشتركين -->
+        <section id="view-subscribers" class="tab-content hidden space-y-4">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800">قائمة المشتركين المسجلين</h2>
+                <button onclick="switchTab('add-subscriber')" class="bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-600">+ إضافة مشترك</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-slate-100 border-b">
+                        <tr>
+                            <th class="p-2">الاسم</th>
+                            <th class="p-2">الهاتف</th>
+                            <th class="p-2">المشروع</th>
+                            <th class="p-2">البريد المغذي</th>
+                            <th class="p-2">سعر الميغا</th>
+                            <th class="p-2">الحزمة</th>
+                            <th class="p-2">الإيراد الشهري</th>
+                            <th class="p-2">العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-subscribers-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. SUBSCRIBER PROFILE TAB بروفايل المشترك التفصيلي والمحاسبي -->
+        <section id="sub-profile" class="tab-content hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800" id="prof-sub-name">اسم المشترك</h2>
+                    <span class="text-xs text-slate-500" id="prof-sub-project-post">المشروع والبريد</span>
+                </div>
+                <button onclick="switchTab('view-subscribers')" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300">العودة للقائمة</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 block">رقم الهاتف</span>
+                    <span id="prof-sub-phone" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 block">الحزمة والسعر</span>
+                    <span id="prof-sub-package" class="font-bold text-sky-600"></span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 block">رابط السويتش</span>
+                    <a id="prof-sub-link" href="#" target="_blank" class="font-bold text-amber-600 hover:underline"></a>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 block">الباقي كدين (مستحق)</span>
+                    <span id="prof-sub-debt" class="font-black text-rose-600 text-lg">$0.00</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
+                        <span>تثبيت وترقيات الحزمة</span>
+                        <i class="fa-solid fa-box-archive text-amber-500"></i>
+                    </h3>
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="p-2">الحزمة المثبتة</th>
+                                <th class="p-2">سعر الميغا</th>
+                                <th class="p-2">القيمة / الإيراد</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prof-sub-packages-list" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
+                        <span>سجل الدفعات والمستحقات</span>
+                        <i class="fa-solid fa-receipt text-purple-500"></i>
+                    </h3>
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="p-2">نوع الحركة</th>
+                                <th class="p-2">المبلغ</th>
+                                <th class="p-2">البيان</th>
+                                <th class="p-2">التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prof-sub-payments-list" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW POSTS TAB -->
+        <section id="view-posts" class="tab-content hidden space-y-4">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800">قائمة فروع البريد المسجلة</h2>
+                <button onclick="switchTab('add-post')" class="bg-sky-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-sky-500">+ إضافة فرع بريد</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-slate-100 border-b">
+                        <tr>
+                            <th class="p-2">اسم البريد</th>
+                            <th class="p-2">المحافظة</th>
+                            <th class="p-2">العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-posts-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW PROJECTS TAB -->
+        <section id="view-projects" class="tab-content hidden space-y-4">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800">قائمة المشاريع المسجلة</h2>
+                <button onclick="switchTab('add-project')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-emerald-500">+ إضافة مشروع</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-slate-100 border-b">
+                        <tr>
+                            <th class="p-2">اسم المشروع</th>
+                            <th class="p-2">الدولة</th>
+                            <th class="p-2">المحافظة</th>
+                            <th class="p-2">المدينة</th>
+                            <th class="p-2">العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-projects-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW VOUCHERS TAB -->
+        <section id="view-vouchers" class="tab-content hidden space-y-4">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800">سندات القبض والدفع المسجلة</h2>
+                <button onclick="switchTab('add-voucher')" class="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-purple-500">+ إضافة سند جديد</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-slate-100 border-b">
+                        <tr>
+                            <th class="p-2">نوع السند</th>
+                            <th class="p-2">الصندوق</th>
+                            <th class="p-2">المبلغ</th>
+                            <th class="p-2">الجهة / البيان</th>
+                            <th class="p-2">التاريخ</th>
+                            <th class="p-2">العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-vouchers-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FORM ADD/EDIT VOUCHER -->
+        <section id="add-voucher" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="voucher-form-title">إضافة سند قبض / دفع</h2>
+            <form id="form-add-voucher" onsubmit="handleSaveVoucher(event)" class="space-y-4">
+                <input type="hidden" id="edit-voucher-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">نوع السند</label>
+                    <select required id="voucher-type" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="قبض">سند قبض (إيراد / سداد مشتركي)</option>
+                        <option value="دفع">سند دفع (مصروف)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">الصندوق المستهدف</label>
+                    <select required id="voucher-cashbox-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">ربط مع مشترك (اختياري)</label>
+                    <select id="voucher-sub-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="">-- بدون ربط بمشترك --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">المبلغ</label>
+                    <input type="number" step="0.01" required id="voucher-amount" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">الجهة / اسم الشخص / البيان</label>
+                    <input type="text" required id="voucher-description" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="شرح المعاملة أو اسم العميل">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">التاريخ</label>
+                    <input type="date" required id="voucher-date" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-lg transition">حفظ السند</button>
+            </form>
+        </section>
+
+        <!-- FORM ADD/EDIT CASHBOX -->
+        <section id="add-cashbox" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2">إضافة صندوق جديد</h2>
+            <form id="form-add-cashbox" onsubmit="handleSaveCashbox(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">اسم الصندوق</label>
+                    <input type="text" required id="cashbox-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="مثال: صندوق شام كاش الرئيسي">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">العملة</label>
+                    <select required id="cashbox-currency" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="USD">دولار أمريكي ($)</option>
+                        <option value="TRY">ليرة تركية (TRY)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">الرصيد الأولي</label>
+                    <input type="number" step="0.01" required id="cashbox-balance" value="0" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition">حفظ الصندوق</button>
+            </form>
+        </section>
+
+        <!-- FORM ADD/EDIT PROJECT -->
+        <section id="add-project" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="proj-form-title">إضافة فرع مشروع جديد</h2>
+            <form id="form-add-project" onsubmit="handleSaveProject(event)" class="space-y-4">
+                <input type="hidden" id="edit-proj-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">اسم المشروع</label>
+                    <input type="text" required id="proj-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">الدولة</label>
+                    <input type="text" required id="proj-country" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">المحافظة</label>
+                    <input type="text" required id="proj-state" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">المدينة</label>
+                    <input type="text" required id="proj-city" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg transition">حفظ البيانات</button>
+            </form>
+        </section>
+
+        <!-- FORM ADD/EDIT POST (بدون خانة المشروع التابع له) -->
+        <section id="add-post" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="post-form-title">إضافة فرع بريد جديد</h2>
+            <form id="form-add-post" onsubmit="handleSavePost(event)" class="space-y-4">
+                <input type="hidden" id="edit-post-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">اسم البريد</label>
+                    <input type="text" required id="post-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">المحافظة</label>
+                    <input type="text" required id="post-state" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg transition">حفظ البيانات</button>
+            </form>
+        </section>
+
+        <!-- FORM ADD/EDIT SUBSCRIBER -->
+        <section id="add-subscriber" class="tab-content hidden max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="sub-form-title">إضافة زبون جديد</h2>
+            <form id="form-add-sub" onsubmit="handleSaveSubscriber(event)" class="grid grid-cols-2 gap-4">
+                <input type="hidden" id="edit-sub-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">اسم الزبون</label>
+                    <input type="text" required id="sub-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">رقم الهاتف</label>
+                    <input type="text" required id="sub-phone" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">المشروع</label>
+                    <select required id="sub-project-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">البريد المغذي له</label>
+                    <select required id="sub-post-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">سعر الميغا ($)</label>
+                    <input type="number" step="0.01" required id="sub-price-per-mb" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" value="1.90">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">حجم الحزمة (Mbps)</label>
+                    <input type="number" required id="sub-package-size" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" value="10">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">رابط السويتش</label>
+                    <input type="text" id="sub-switch-link" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">ملاحظات</label>
+                    <textarea id="sub-notes" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" rows="2"></textarea>
+                </div>
+                <button type="submit" class="col-span-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg transition">حفظ البيانات وتثبيت الحزمة</button>
+            </form>
+        </section>
+
+        <!-- UPGRADE PACKAGE TAB -->
+        <section id="upgrade-package" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2">رفع حزمة مشترك (حساب تناسبي)</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">البحث عن زبون</label>
+                    <select id="upgrade-sub-select" onchange="calculateUpgrade()" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">مقدار الرفع (Mbps)</label>
+                        <input type="number" id="upgrade-mb-amount" oninput="calculateUpgrade()" value="50" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">اليوم الحالي بالشهر</label>
+                        <input type="number" id="upgrade-current-day" oninput="calculateUpgrade()" value="5" min="1" max="30" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+                <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-2 text-sm text-amber-900">
+                    <div class="flex justify-between"><span>سعر الميغا للزبون:</span> <span id="calc-price-mb" class="font-bold">$0.00</span></div>
+                    <div class="flex justify-between"><span>الأيام المتبقية لنهاية الشهر:</span> <span id="calc-days-left" class="font-bold">25 يوم</span></div>
+                    <hr class="border-amber-200">
+                    <div class="flex justify-between text-base font-bold">
+                        <span>قيمة الرفع المستحقة:</span>
+                        <span id="calc-total-cost" class="text-emerald-700 font-extrabold text-lg">$0.00</span>
+                    </div>
+                </div>
+                <button onclick="confirmUpgrade()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition">تأكيد الرفع وترحيل القيد للمحاسبة</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript - إدارة التخزين المحلي والبيانات أوتوماتيكياً -->
+    <script>
+        const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
+
+        let systemData = {
+            projects: [],
+            posts: [],
+            subscribers: [],
+            cashBoxes: [],
+            vouchers: []
+        };
+
+        function loadDataFromStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    systemData = JSON.parse(saved);
+                } catch(e) {
+                    console.error('Error loading saved data');
+                }
+            }
+        }
+
+        function saveDataToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(systemData));
+        }
+
+        function clearAllData() {
+            if(confirm('هل أنت تأكد من تفريغ كافة البيانات المسجلة على هذا الجهاز؟')) {
+                localStorage.removeItem(STORAGE_KEY);
+                systemData = { projects: [], posts: [], subscribers: [], cashBoxes: [], vouchers: [] };
+                renderTables();
+                renderDashboard();
+                alert('تم مسح البيانات بنجاح.');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-amber-500', 'text-slate-950', 'font-bold');
+                el.classList.add('text-slate-300');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const btn = document.getElementById(`btn-${tabId}`);
+            if(btn) {
+                btn.classList.add('bg-amber-500', 'text-slate-950', 'font-bold');
+                btn.classList.remove('text-slate-300');
+            }
+
+            populateDropdowns();
+            renderTables();
+            if (tabId === 'dashboard') renderDashboard();
+        }
+
+        window.onload = function() {
+            loadDataFromStorage();
+
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('voucher-date');
+            if (dateInput) dateInput.value = today;
+
+            populateDropdowns();
+            renderTables();
+            renderDashboard();
+        };
+
+        function populateDropdowns() {
+            const projSelect = document.getElementById('sub-project-select');
+            if (projSelect) {
+                projSelect.innerHTML = systemData.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            }
+
+            const postSelect = document.getElementById('sub-post-select');
+            if (postSelect) {
+                postSelect.innerHTML = systemData.posts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            }
+
+            const cashSelect = document.getElementById('voucher-cashbox-select');
+            if (cashSelect) {
+                cashSelect.innerHTML = systemData.cashBoxes.map(c => `<option value="${c.id}">${c.name} (${c.currency})</option>`).join('');
+            }
+
+            const subVoucherSelect = document.getElementById('voucher-sub-select');
+            if (subVoucherSelect) {
+                subVoucherSelect.innerHTML = `<option value="">-- بدون ربط بمشترك --</option>` + systemData.subscribers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            }
+
+            const upSubSelect = document.getElementById('upgrade-sub-select');
+            if(upSubSelect) {
+                upSubSelect.innerHTML = systemData.subscribers.map(s => `<option value="${s.id}">${s.name} (${s.packageMb} Mbps)</option>`).join('');
+            }
+        }
+
+        function renderTables() {
+            // Subscribers Table
+            const subBody = document.getElementById('table-subscribers-body');
+            subBody.innerHTML = systemData.subscribers.length === 0 ? 
+                `<tr><td colspan="8" class="text-center p-4 text-slate-400">لا يوجد مشتركين مسجلين حالياً</td></tr>` :
+                systemData.subscribers.map(s => {
+                    const proj = systemData.projects.find(p => p.id === s.projectId);
+                    const post = systemData.posts.find(p => p.id === s.postId);
+                    return `
+                        <tr>
+                            <td class="p-2"><button onclick="viewSubscriberProfile(${s.id})" class="font-bold text-amber-600 hover:underline">${s.name}</button></td>
+                            <td class="p-2">${s.phone}</td>
+                            <td class="p-2">${proj ? proj.name : '-'}</td>
+                            <td class="p-2">${post ? post.name : '-'}</td>
+                            <td class="p-2">$${s.pricePerMb}</td>
+                            <td class="p-2 font-bold">${s.packageMb} Mbps</td>
+                            <td class="p-2 text-emerald-600 font-bold">$${(s.packageMb * s.pricePerMb).toFixed(2)}</td>
+                            <td class="p-2 space-x-2 space-x-reverse">
+                                <button onclick="viewSubscriberProfile(${s.id})" class="text-amber-500 hover:text-amber-700" title="مشاهدة البروفايل"><i class="fa-solid fa-eye"></i></button>
+                                <button onclick="editSubscriber(${s.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteSubscriber(${s.id})" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            // Posts Table (بدون خانة المشروع التابع له)
+            const postBody = document.getElementById('table-posts-body');
+            postBody.innerHTML = systemData.posts.length === 0 ?
+                `<tr><td colspan="3" class="text-center p-4 text-slate-400">لا يوجد فروع بريد مسجلة حالياً</td></tr>` :
+                systemData.posts.map(p => `
+                    <tr>
+                        <td class="p-2 font-medium">${p.name}</td>
+                        <td class="p-2">${p.state}</td>
+                        <td class="p-2 space-x-2 space-x-reverse">
+                            <button onclick="editPost(${p.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deletePost(${p.id})" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            // Projects Table
+            const projBody = document.getElementById('table-projects-body');
+            projBody.innerHTML = systemData.projects.length === 0 ?
+                `<tr><td colspan="5" class="text-center p-4 text-slate-400">لا يوجد مشاريع مسجلة حالياً</td></tr>` :
+                systemData.projects.map(p => `
+                    <tr>
+                        <td class="p-2 font-medium">${p.name}</td>
+                        <td class="p-2">${p.country}</td>
+                        <td class="p-2">${p.state}</td>
+                        <td class="p-2">${p.city}</td>
+                        <td class="p-2 space-x-2 space-x-reverse">
+                            <button onclick="editProject(${p.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteProject(${p.id})" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            // Vouchers Table
+            const voucherBody = document.getElementById('table-vouchers-body');
+            voucherBody.innerHTML = systemData.vouchers.length === 0 ?
+                `<tr><td colspan="6" class="text-center p-4 text-slate-400">لا يوجد سندات قبض أو دفع مسجلة حالياً</td></tr>` :
+                systemData.vouchers.map(v => {
+                    const cashbox = systemData.cashBoxes.find(c => c.id === v.cashboxId);
+                    const isReceipt = v.type === 'قبض';
+                    return `
+                        <tr>
+                            <td class="p-2"><span class="px-2 py-1 rounded text-xs font-bold ${isReceipt ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${v.type}</span></td>
+                            <td class="p-2">${cashbox ? cashbox.name : '-'}</td>
+                            <td class="p-2 font-bold ${isReceipt ? 'text-emerald-600' : 'text-rose-600'}">${v.amount} ${cashbox ? cashbox.currency : ''}</td>
+                            <td class="p-2">${v.description}</td>
+                            <td class="p-2 text-slate-500">${v.date}</td>
+                            <td class="p-2 space-x-2 space-x-reverse">
+                                <button onclick="editVoucher(${v.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteVoucher(${v.id})" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+        }
+
+        function viewSubscriberProfile(subId) {
+            const sub = systemData.subscribers.find(s => s.id === subId);
+            if (!sub) return;
+
+            const proj = systemData.projects.find(p => p.id === sub.projectId);
+            const post = systemData.posts.find(p => p.id === sub.postId);
+
+            document.getElementById('prof-sub-name').innerText = sub.name;
+            document.getElementById('prof-sub-project-post').innerText = `${proj ? proj.name : ''} / ${post ? post.name : ''}`;
+            document.getElementById('prof-sub-phone').innerText = sub.phone;
+            document.getElementById('prof-sub-package').innerText = `${sub.packageMb} Mbps (بسعر $${sub.pricePerMb}/ميغا)`;
+            
+            const linkEl = document.getElementById('prof-sub-link');
+            linkEl.innerText = sub.switchLink || 'لا يوجد رابط';
+            linkEl.href = sub.switchLink || '#';
+
+            const subVouchers = systemData.vouchers.filter(v => v.subId === subId);
+            const totalPaid = subVouchers.filter(v => v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
+            
+            const monthlyCost = sub.packageMb * sub.pricePerMb;
+            const totalDue = monthlyCost + (sub.debt || 0);
+            const remainingDebt = totalDue - totalPaid;
+
+            document.getElementById('prof-sub-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+
+            const pkgList = document.getElementById('prof-sub-packages-list');
+            pkgList.innerHTML = `
+                <tr>
+                    <td class="p-2 font-bold">${sub.packageMb} Mbps</td>
+                    <td class="p-2">$${sub.pricePerMb}</td>
+                    <td class="p-2 font-bold text-emerald-600">$${monthlyCost.toFixed(2)}</td>
+                </tr>
+            `;
+
+            const payList = document.getElementById('prof-sub-payments-list');
+            payList.innerHTML = subVouchers.length === 0 ? 
+                `<tr><td colspan="4" class="text-center p-3 text-slate-400">لا يوجد دفعات مسجلة للمشترك</td></tr>` :
+                subVouchers.map(v => `
+                    <tr>
+                        <td class="p-2"><span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">سداد دفعة</span></td>
+                        <td class="p-2 font-bold text-emerald-600">$${v.amount}</td>
+                        <td class="p-2">${v.description}</td>
+                        <td class="p-2 text-slate-400">${v.date}</td>
+                    </tr>
+                `).join('');
+
+            switchTab('sub-profile');
+        }
+
+        // Vouchers Handlers
+        function handleSaveVoucher(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-voucher-id').value;
+            const type = document.getElementById('voucher-type').value;
+            const cashboxId = parseInt(document.getElementById('voucher-cashbox-select').value);
+            const subIdVal = document.getElementById('voucher-sub-select').value;
+            const subId = subIdVal ? parseInt(subIdVal) : null;
+            const amount = parseFloat(document.getElementById('voucher-amount').value);
+            const description = document.getElementById('voucher-description').value;
+            const date = document.getElementById('voucher-date').value;
+
+            if (id) {
+                const voucher = systemData.vouchers.find(v => v.id == id);
+                voucher.type = type;
+                voucher.cashboxId = cashboxId;
+                voucher.subId = subId;
+                voucher.amount = amount;
+                voucher.description = description;
+                voucher.date = date;
+            } else {
+                systemData.vouchers.push({
+                    id: Date.now(),
+                    type,
+                    cashboxId,
+                    subId,
+                    amount,
+                    description,
+                    date
+                });
+            }
+            saveDataToStorage();
+            e.target.reset();
+            document.getElementById('edit-voucher-id').value = '';
+            switchTab('view-vouchers');
+        }
+
+        function editVoucher(id) {
+            const v = systemData.vouchers.find(item => item.id === id);
+            if (!v) return;
+            document.getElementById('edit-voucher-id').value = v.id;
+            document.getElementById('voucher-type').value = v.type;
+            document.getElementById('voucher-cashbox-select').value = v.cashboxId;
+            document.getElementById('voucher-sub-select').value = v.subId || '';
+            document.getElementById('voucher-amount').value = v.amount;
+            document.getElementById('voucher-description').value = v.description;
+            document.getElementById('voucher-date').value = v.date;
+            switchTab('add-voucher');
+        }
+
+        function deleteVoucher(id) {
+            if (confirm('هل أنت تأكد من حذف هذا السند؟')) {
+                systemData.vouchers = systemData.vouchers.filter(v => v.id !== id);
+                saveDataToStorage();
+                switchTab('view-vouchers');
+            }
+        }
+
+        // CRUD Project / Post / Sub
+        function handleSaveProject(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-proj-id').value;
+            if (id) {
+                const proj = systemData.projects.find(p => p.id == id);
+                proj.name = document.getElementById('proj-name').value;
+                proj.country = document.getElementById('proj-country').value;
+                proj.state = document.getElementById('proj-state').value;
+                proj.city = document.getElementById('proj-city').value;
+            } else {
+                systemData.projects.push({
+                    id: Date.now(),
+                    name: document.getElementById('proj-name').value,
+                    country: document.getElementById('proj-country').value,
+                    state: document.getElementById('proj-state').value,
+                    city: document.getElementById('proj-city').value
+                });
+            }
+            saveDataToStorage();
+            e.target.reset();
+            document.getElementById('edit-proj-id').value = '';
+            switchTab('view-projects');
+        }
+
+        function editProject(id) {
+            const proj = systemData.projects.find(p => p.id === id);
+            if (!proj) return;
+            document.getElementById('edit-proj-id').value = proj.id;
+            document.getElementById('proj-name').value = proj.name;
+            document.getElementById('proj-country').value = proj.country;
+            document.getElementById('proj-state').value = proj.state;
+            document.getElementById('proj-city').value = proj.city;
+            switchTab('add-project');
+        }
+
+        function deleteProject(id) {
+            if (confirm('هل أنت تأكد من حذف هذا المشروع؟')) {
+                systemData.projects = systemData.projects.filter(p => p.id !== id);
+                saveDataToStorage();
+                switchTab('view-projects');
+            }
+        }
+
+        // Post Handlers (بدون حقل المشروع)
+        function handleSavePost(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-post-id').value;
+            if (id) {
+                const post = systemData.posts.find(p => p.id == id);
+                post.name = document.getElementById('post-name').value;
+                post.state = document.getElementById('post-state').value;
+            } else {
+                systemData.posts.push({
+                    id: Date.now(),
+                    name: document.getElementById('post-name').value,
+                    state: document.getElementById('post-state').value
+                });
+            }
+            saveDataToStorage();
+            e.target.reset();
+            document.getElementById('edit-post-id').value = '';
+            switchTab('view-posts');
+        }
+
+        function editPost(id) {
+            const post = systemData.posts.find(p => p.id === id);
+            if (!post) return;
+            document.getElementById('edit-post-id').value = post.id;
+            document.getElementById('post-name').value = post.name;
+            document.getElementById('post-state').value = post.state;
+            switchTab('add-post');
+        }
+
+        function deletePost(id) {
+            if (confirm('هل أنت تأكد من حذف فرع البريد هذا؟')) {
+                systemData.posts = systemData.posts.filter(p => p.id !== id);
+                saveDataToStorage();
+                switchTab('view-posts');
+            }
+        }
+
+        function handleSaveSubscriber(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-sub-id').value;
+            if (id) {
+                const sub = systemData.subscribers.find(s => s.id == id);
+                sub.name = document.getElementById('sub-name').value;
+                sub.phone = document.getElementById('sub-phone').value;
+                sub.projectId = parseInt(document.getElementById('sub-project-select').value);
+                sub.postId = parseInt(document.getElementById('sub-post-select').value);
+                sub.pricePerMb = parseFloat(document.getElementById('sub-price-per-mb').value);
+                sub.packageMb = parseInt(document.getElementById('sub-package-size').value);
+                sub.switchLink = document.getElementById('sub-switch-link').value;
+                sub.notes = document.getElementById('sub-notes').value;
+            } else {
+                systemData.subscribers.push({
+                    id: Date.now(),
+                    name: document.getElementById('sub-name').value,
+                    phone: document.getElementById('sub-phone').value,
+                    projectId: parseInt(document.getElementById('sub-project-select').value),
+                    postId: parseInt(document.getElementById('sub-post-select').value),
+                    pricePerMb: parseFloat(document.getElementById('sub-price-per-mb').value),
+                    packageMb: parseInt(document.getElementById('sub-package-size').value),
+                    switchLink: document.getElementById('sub-switch-link').value,
+                    notes: document.getElementById('sub-notes').value,
+                    debt: 0
+                });
+            }
+            saveDataToStorage();
+            e.target.reset();
+            document.getElementById('edit-sub-id').value = '';
+            switchTab('view-subscribers');
+        }
+
+        function editSubscriber(id) {
+            const sub = systemData.subscribers.find(s => s.id === id);
+            if (!sub) return;
+            document.getElementById('edit-sub-id').value = sub.id;
+            document.getElementById('sub-name').value = sub.name;
+            document.getElementById('sub-phone').value = sub.phone;
+            document.getElementById('sub-project-select').value = sub.projectId;
+            document.getElementById('sub-post-select').value = sub.postId;
+            document.getElementById('sub-price-per-mb').value = sub.pricePerMb;
+            document.getElementById('sub-package-size').value = sub.packageMb;
+            document.getElementById('sub-switch-link').value = sub.switchLink;
+            document.getElementById('sub-notes').value = sub.notes;
+            switchTab('add-subscriber');
+        }
+
+        function deleteSubscriber(id) {
+            if (confirm('هل أنت تأكد من حذف هذا المشترك؟')) {
+                systemData.subscribers = systemData.subscribers.filter(s => s.id !== id);
+                saveDataToStorage();
+                switchTab('view-subscribers');
+            }
+        }
+
+        function handleSaveCashbox(e) {
+            e.preventDefault();
+            systemData.cashBoxes.push({
+                id: Date.now(),
+                name: document.getElementById('cashbox-name').value,
+                currency: document.getElementById('cashbox-currency').value,
+                balance: parseFloat(document.getElementById('cashbox-balance').value) || 0
+            });
+            saveDataToStorage();
+            e.target.reset();
+            alert('تمت إضافة الصندوق المحاسبي بنجاح!');
+            switchTab('dashboard');
+        }
+
+        function renderDashboard() {
+            const widgetsContainer = document.getElementById('dashboard-widgets');
+            widgetsContainer.innerHTML = '';
+
+            if (systemData.projects.length === 0 && systemData.cashBoxes.length === 0) {
+                widgetsContainer.innerHTML = `<div class="col-span-4 p-6 bg-white rounded-xl text-center text-slate-400 border">قم بإضافة المشاريع والصناديق والزبائن للبدء بإظهار التقارير هنا.</div>`;
+                return;
+            }
+
+            systemData.projects.forEach(proj => {
+                const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
+                const totalRevenue = projSubs.reduce((sum, s) => sum + (s.packageMb * s.pricePerMb), 0);
+                
+                widgetsContainer.innerHTML += `
+                    <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 p-4 rounded-xl shadow-sm">
+                        <span class="text-xs font-bold block opacity-80">إيرادات ${proj.name}</span>
+                        <span class="text-2xl font-black">${totalRevenue.toFixed(2)} $</span>
+                        <span class="text-xs block mt-2 opacity-90">عدد المشتركين: ${projSubs.length}</span>
+                    </div>
+                `;
+            });
+
+            systemData.cashBoxes.forEach(c => {
+                const receipts = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
+                const payments = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'دفع').reduce((sum, v) => sum + v.amount, 0);
+                const currentBalance = c.balance + receipts - payments;
+
+                widgetsContainer.innerHTML += `
+                    <div class="bg-gradient-to-br from-purple-600 to-purple-700 text-white p-4 rounded-xl shadow-sm">
+                        <span class="text-xs font-bold block opacity-80">${c.name}</span>
+                        <span class="text-2xl font-black">${currentBalance.toFixed(2)} ${c.currency}</span>
+                        <span class="text-xs block mt-2 opacity-90">سندات قبض: +${receipts} | دفع: -${payments}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function calculateUpgrade() {
+            const subId = parseInt(document.getElementById('upgrade-sub-select').value);
+            const sub = systemData.subscribers.find(s => s.id === subId);
+            if (!sub) return;
+
+            const mbAmount = parseFloat(document.getElementById('upgrade-mb-amount').value) || 0;
+            const currentDay = parseInt(document.getElementById('upgrade-current-day').value) || 1;
+            const daysLeft = Math.max(0, 30 - currentDay);
+            const totalCost = ((mbAmount * sub.pricePerMb) / 30) * daysLeft;
+
+            document.getElementById('calc-price-mb').innerText = `$${sub.pricePerMb.toFixed(2)}`;
+            document.getElementById('calc-days-left').innerText = `${daysLeft} يوم`;
+            document.getElementById('calc-total-cost').innerText = `$${totalCost.toFixed(2)}`;
+        }
+
+        function confirmUpgrade() {
+            const subId = parseInt(document.getElementById('upgrade-sub-select').value);
+            const sub = systemData.subscribers.find(s => s.id === subId);
+            const mbAmount = parseFloat(document.getElementById('upgrade-mb-amount').value) || 0;
+            const currentDay = parseInt(document.getElementById('upgrade-current-day').value) || 1;
+            const daysLeft = Math.max(0, 30 - currentDay);
+            const totalCost = ((mbAmount * sub.pricePerMb) / 30) * daysLeft;
+
+            if (sub) {
+                sub.packageMb += mbAmount;
+                sub.debt = (sub.debt || 0) + totalCost;
+                saveDataToStorage();
+                alert(`تم رفع حزمة المشترك ${sub.name} بمقدار ${mbAmount} Mbps وترحيل مبلغ $${totalCost.toFixed(2)} إلى حسابه.`);
+                switchTab('view-subscribers');
+            }
+        }
+
+        function exportMonthlyReport() {
+            if (systemData.projects.length === 0 && systemData.cashBoxes.length === 0) {
+                alert('لا يوجد بيانات لتصديرها حالياً.');
+                return;
+            }
+            const wb = XLSX.utils.book_new();
+
+            systemData.projects.forEach(proj => {
+                const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
+                const data = projSubs.map(s => ({
+                    "اسم الزبون": s.name,
+                    "رقم الهاتف": s.phone,
+                    "الحزمة المثبتة (Mbps)": s.packageMb,
+                    "سعر الميغا ($)": s.pricePerMb,
+                    "مجموع الإيراد ($)": s.packageMb * s.pricePerMb
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                XLSX.utils.book_append_sheet(wb, ws, proj.name.substring(0, 30));
+            });
+
+            const voucherData = systemData.vouchers.map(v => {
+                const cb = systemData.cashBoxes.find(c => c.id === v.cashboxId);
+                const sub = systemData.subscribers.find(s => s.id === v.subId);
+                return {
+                    "نوع السند": v.type,
+                    "المشترك": sub ? sub.name : '-',
+                    "الصندوق": cb ? cb.name : '',
+                    "المبلغ": v.amount,
+                    "العملة": cb ? cb.currency : '',
+                    "الجهة / البيان": v.description,
+                    "التاريخ": v.date
+                };
+            });
+            if(voucherData.length > 0) {
+                const vWs = XLSX.utils.json_to_sheet(voucherData);
+                XLSX.utils.book_append_sheet(wb, vWs, "السندات المحاسبية");
+            }
+
+            XLSX.writeFile(wb, `التقرير_الشهري_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+    </script>
+</body>
+</html>
