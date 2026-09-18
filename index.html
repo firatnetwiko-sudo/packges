@@ -122,7 +122,7 @@
             </div>
         </section>
 
-        <!-- 3. SUBSCRIBER PROFILE TAB بروفايل المشترك التفصيلي والمحاسبي -->
+        <!-- 3. SUBSCRIBER PROFILE TAB بروفايل المشترك التفصيلي والمحاسبي المحدث -->
         <section id="sub-profile" class="tab-content hidden space-y-6">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div>
@@ -132,26 +132,32 @@
                 <button onclick="switchTab('view-subscribers')" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300">العودة للقائمة</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- بطاقات معلومات المشترك المنفصلة -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <span class="text-xs text-slate-500 block">رقم الهاتف</span>
-                    <span id="prof-sub-phone" class="font-bold text-slate-800"></span>
+                    <span id="prof-sub-phone" class="font-bold text-slate-800 text-lg"></span>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <span class="text-xs text-slate-500 block">إجمالي الحزمة الكلية</span>
-                    <span id="prof-sub-package" class="font-bold text-sky-600"></span>
+                    <span id="prof-sub-package" class="font-bold text-sky-600 text-lg"></span>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span class="text-xs text-slate-500 block">رابط السويتش</span>
-                    <a id="prof-sub-link" href="#" target="_blank" class="font-bold text-amber-600 hover:underline"></a>
+                    <span class="text-xs text-slate-500 block">إيراد الحزمة الكلي</span>
+                    <span id="prof-sub-revenue" class="font-bold text-emerald-600 text-lg">$0.00</span>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span class="text-xs text-slate-500 block">الباقي كدين (مستحق)</span>
+                    <span class="text-xs text-slate-500 block">إجمالي المدفوع</span>
+                    <span id="prof-sub-paid" class="font-bold text-purple-600 text-lg">$0.00</span>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 block">باقي الدين</span>
                     <span id="prof-sub-debt" class="font-black text-rose-600 text-lg">$0.00</span>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- سيكشن تغذية الحزمة من البريد -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
                         <span>تغذية الحزمة من البريد</span>
@@ -170,6 +176,7 @@
                     </table>
                 </div>
 
+                <!-- سيكشن سجل الدفعات والمستحقات مع إضافة عمود العمليات -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
                         <span>سجل الدفعات والمستحقات</span>
@@ -182,6 +189,7 @@
                                 <th class="p-2">المبلغ</th>
                                 <th class="p-2">البيان</th>
                                 <th class="p-2">التاريخ</th>
+                                <th class="p-2">العمليات</th>
                             </tr>
                         </thead>
                         <tbody id="prof-sub-payments-list" class="divide-y divide-slate-100"></tbody>
@@ -438,7 +446,7 @@
 
     </main>
 
-    <!-- JavaScript - المحرك البرمجي ودوال التجديد الشهري أوتوماتيكياً -->
+    <!-- JavaScript - إدارة بروفايل المشترك والعمليات المحاسبية -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -563,9 +571,6 @@
             }
         }
 
-        // --- دوال التجديد الشهري المضافة حديثاً ---
-
-        // 1. تجديد اشتراك زبون فردي
         function renewSubscriberMonthly(subId) {
             const sub = systemData.subscribers.find(s => s.id === subId);
             if (!sub) return;
@@ -581,7 +586,6 @@
             }
         }
 
-        // 2. تجديد جميع المشتركين دفعة واحدة لأول الشهر
         function renewAllSubscribersForNewMonth() {
             if (systemData.subscribers.length === 0) {
                 alert('لا يوجد مشتركين مسجلين لتجديد اشتراكاتهم.');
@@ -693,6 +697,7 @@
                 }).join('');
         }
 
+        // عرض بروفايل المشترك وحساب الخانات المنفصلة
         function viewSubscriberProfile(subId) {
             const sub = systemData.subscribers.find(s => s.id === subId);
             if (!sub) return;
@@ -700,26 +705,27 @@
             const proj = systemData.projects.find(p => p.id === sub.projectId);
             const feeds = sub.feeds || [];
 
+            // 1. حساب إجمالي الحزمة وإيراد الحزمة الكلي
             const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
             const totalMonthlyRevenue = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
 
+            // 2. حساب إجمالي المدفوع من السندات المربوطة بالمشترك
+            const subVouchers = systemData.vouchers.filter(v => v.subId === subId);
+            const totalPaid = subVouchers.filter(v => v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
+
+            // 3. حساب باقي الدين = إيراد الحزمة الكلي - إجمالي المدفوع
+            const remainingDebt = totalMonthlyRevenue - totalPaid;
+
+            // تعبئة البيانات المنفصلة في الخانات العلوية
             document.getElementById('prof-sub-name').innerText = sub.name;
             document.getElementById('prof-sub-project').innerText = proj ? proj.name : '';
             document.getElementById('prof-sub-phone').innerText = sub.phone;
-            document.getElementById('prof-sub-package').innerText = `${totalMb} Mbps (إجمالي الإيراد: $${totalMonthlyRevenue.toFixed(2)})`;
-            
-            const linkEl = document.getElementById('prof-sub-link');
-            linkEl.innerText = sub.switchLink || 'لا يوجد رابط';
-            linkEl.href = sub.switchLink || '#';
-
-            const subVouchers = systemData.vouchers.filter(v => v.subId === subId);
-            const totalPaid = subVouchers.filter(v => v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
-            
-            const totalDue = sub.debt || 0;
-            const remainingDebt = totalDue - totalPaid;
-
+            document.getElementById('prof-sub-package').innerText = `${totalMb} Mbps`;
+            document.getElementById('prof-sub-revenue').innerText = `$${totalMonthlyRevenue.toFixed(2)}`;
+            document.getElementById('prof-sub-paid').innerText = `$${totalPaid.toFixed(2)}`;
             document.getElementById('prof-sub-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
+            // جدول تغذية الحزمة من البريد
             const pkgList = document.getElementById('prof-sub-packages-list');
             pkgList.innerHTML = feeds.map(f => {
                 const post = systemData.posts.find(p => p.id === f.postId);
@@ -734,19 +740,32 @@
                 `;
             }).join('');
 
+            // جدول سجل الدفعات والمستحقات مع أزرار التعديل والحذف لكل سند
             const payList = document.getElementById('prof-sub-payments-list');
             payList.innerHTML = subVouchers.length === 0 ? 
-                `<tr><td colspan="4" class="text-center p-3 text-slate-400">لا يوجد دفعات مسجلة للمشترك</td></tr>` :
+                `<tr><td colspan="5" class="text-center p-3 text-slate-400">لا يوجد دفعات مسجلة للمشترك</td></tr>` :
                 subVouchers.map(v => `
                     <tr>
-                        <td class="p-2"><span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">سداد دفعة</span></td>
+                        <td class="p-2"><span class="px-2 py-0.5 rounded text-xs font-bold ${v.type === 'قبض' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${v.type}</span></td>
                         <td class="p-2 font-bold text-emerald-600">$${v.amount}</td>
                         <td class="p-2">${v.description}</td>
                         <td class="p-2 text-slate-400">${v.date}</td>
+                        <td class="p-2 space-x-2 space-x-reverse">
+                            <button onclick="editVoucher(${v.id})" class="text-sky-600 hover:text-sky-800" title="تعديل السند"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteVoucherFromProfile(${v.id}, ${sub.id})" class="text-rose-600 hover:text-rose-800" title="حذف السند"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>
                 `).join('');
 
             switchTab('sub-profile');
+        }
+
+        function deleteVoucherFromProfile(voucherId, subId) {
+            if (confirm('هل أنت تأكد من حذف هذا السند؟')) {
+                systemData.vouchers = systemData.vouchers.filter(v => v.id !== voucherId);
+                saveDataToStorage();
+                viewSubscriberProfile(subId); // إعادة تحديث البروفايل تلقائياً
+            }
         }
 
         // Vouchers Handlers
@@ -783,7 +802,12 @@
             saveDataToStorage();
             e.target.reset();
             document.getElementById('edit-voucher-id').value = '';
-            switchTab('view-vouchers');
+
+            if (subId) {
+                viewSubscriberProfile(subId);
+            } else {
+                switchTab('view-vouchers');
+            }
         }
 
         function editVoucher(id) {
@@ -905,8 +929,6 @@
                 });
             });
 
-            const initialDebt = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
-
             if (id) {
                 const sub = systemData.subscribers.find(s => s.id == id);
                 sub.name = document.getElementById('sub-name').value;
@@ -924,7 +946,7 @@
                     feeds: feeds,
                     switchLink: document.getElementById('sub-switch-link').value,
                     notes: document.getElementById('sub-notes').value,
-                    debt: initialDebt
+                    debt: 0
                 });
             }
             saveDataToStorage();
@@ -990,7 +1012,6 @@
                 return;
             }
 
-            // 1. Project Widgets
             systemData.projects.forEach(proj => {
                 const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
                 const totalRevenue = projSubs.reduce((sum, s) => {
@@ -1007,7 +1028,6 @@
                 `;
             });
 
-            // 2. Cashbox Widgets
             systemData.cashBoxes.forEach(c => {
                 const receipts = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
                 const payments = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'دفع').reduce((sum, v) => sum + v.amount, 0);
@@ -1022,7 +1042,6 @@
                 `;
             });
 
-            // 3. Post Revenue Widgets
             if (systemData.posts.length === 0) {
                 postWidgetsContainer.innerHTML = `<div class="col-span-4 p-4 bg-white rounded-xl text-center text-slate-400 border text-xs">لا يوجد فروع بريد مسجلة.</div>`;
             } else {
@@ -1085,7 +1104,6 @@
                 sub.feeds[0].packageMb += mbAmount;
             }
 
-            sub.debt = (sub.debt || 0) + totalCost;
             saveDataToStorage();
             alert(`تم رفع حزمة المشترك ${sub.name} بمقدار ${mbAmount} Mbps وترحيل مبلغ $${totalCost.toFixed(2)} إلى حسابه.`);
             switchTab('view-subscribers');
@@ -1123,7 +1141,6 @@
                     "المشترك": sub ? sub.name : '-',
                     "الصندوق": cb ? cb.name : '',
                     "المبلغ": v.amount,
-                    "العملة": cb ? cb.currency : '',
                     "الجهة / البيان": v.description,
                     "التاريخ": v.date
                 };
