@@ -93,7 +93,7 @@
             </div>
         </section>
 
-        <!-- 2. VIEW SUBSCRIBERS TAB مشاهدة وإدارة المشتركين -->
+        <!-- 2. VIEW SUBSCRIBERS TAB مع شريط الفلترة المضاف -->
         <section id="view-subscribers" class="tab-content hidden space-y-4">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 flex-wrap gap-2">
                 <h2 class="text-xl font-bold text-slate-800">قائمة المشتركين المسجلين</h2>
@@ -104,6 +104,27 @@
                     <button onclick="switchTab('add-subscriber')" class="bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-600">+ إضافة مشترك</button>
                 </div>
             </div>
+
+            <!-- شريط الفلترة الديناميكي -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <i class="fa-solid fa-filter text-amber-500"></i> فلترة المشتركين:
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <select id="filter-project" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                        <!-- تُملأ قائمة المشاريع للفلترة أوتوماتيكياً -->
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <select id="filter-post" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                        <!-- تُملأ قائمة البريد للفلترة أوتوماتيكياً -->
+                    </select>
+                </div>
+                <button onclick="resetSubscribersFilter()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 flex items-center gap-1">
+                    <i class="fa-solid fa-xmark"></i> إعادة ضبط
+                </button>
+            </div>
+
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
                 <table class="w-full text-sm text-right">
                     <thead class="bg-slate-100 border-b">
@@ -260,7 +281,7 @@
             </div>
         </section>
 
-        <!-- FORM ADD/EDIT VOUCHER المحدث بالربط التفاعلي للقبض والدفع -->
+        <!-- FORM ADD/EDIT VOUCHER -->
         <section id="add-voucher" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="voucher-form-title">إضافة سند قبض / دفع</h2>
             <form id="form-add-voucher" onsubmit="handleSaveVoucher(event)" class="space-y-4">
@@ -277,7 +298,6 @@
                     <select required id="voucher-cashbox-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
                 </div>
 
-                <!-- خانة الربط مع مشترك (تظهر عند اختيار سند قبض) -->
                 <div id="voucher-sub-container">
                     <label class="block text-sm font-medium mb-1">ربط مع مشترك (اختياري)</label>
                     <select id="voucher-sub-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
@@ -285,7 +305,6 @@
                     </select>
                 </div>
 
-                <!-- خانة الربط مع بريد (تظهر عند اختيار سند دفع لإثبات الفواتير) -->
                 <div id="voucher-post-container" class="hidden">
                     <label class="block text-sm font-medium mb-1">ربط مع فرع البريد (اختياري - سداد فاتورة)</label>
                     <select id="voucher-post-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
@@ -454,7 +473,7 @@
 
     </main>
 
-    <!-- JavaScript - المحرك البرمجي وإدارة السندات التفاعلية -->
+    <!-- JavaScript - المحرك البرمجي وخاصية الفلترة الديناميكية -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -532,6 +551,20 @@
                 projSelect.innerHTML = systemData.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             }
 
+            const filterProj = document.getElementById('filter-project');
+            if (filterProj) {
+                const currentVal = filterProj.value;
+                filterProj.innerHTML = `<option value="all">كل المشاريع</option>` + systemData.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                filterProj.value = currentVal || 'all';
+            }
+
+            const filterPost = document.getElementById('filter-post');
+            if (filterPost) {
+                const currentVal = filterPost.value;
+                filterPost.innerHTML = `<option value="all">كل فروع البريد</option>` + systemData.posts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                filterPost.value = currentVal || 'all';
+            }
+
             const cashSelect = document.getElementById('voucher-cashbox-select');
             if (cashSelect) {
                 cashSelect.innerHTML = systemData.cashBoxes.map(c => `<option value="${c.id}">${c.name} (${c.currency})</option>`).join('');
@@ -556,7 +589,12 @@
             }
         }
 
-        // إظهار/إخفاء خانة المشترك أو البريد حسب نوع السند
+        function resetSubscribersFilter() {
+            document.getElementById('filter-project').value = 'all';
+            document.getElementById('filter-post').value = 'all';
+            renderTables();
+        }
+
         function toggleVoucherLinkOptions() {
             const voucherType = document.getElementById('voucher-type').value;
             const subContainer = document.getElementById('voucher-sub-container');
@@ -639,11 +677,21 @@
         }
 
         function renderTables() {
+            // الفلترة الديناميكية للمشتركين بحسب المشروع والبريد
+            const selectedProjId = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
+            const selectedPostId = document.getElementById('filter-post') ? document.getElementById('filter-post').value : 'all';
+
+            const filteredSubscribers = systemData.subscribers.filter(sub => {
+                const matchProject = (selectedProjId === 'all' || sub.projectId == selectedProjId);
+                const matchPost = (selectedPostId === 'all' || (sub.feeds || []).some(f => f.postId == selectedPostId));
+                return matchProject && matchPost;
+            });
+
             // Subscribers Table
             const subBody = document.getElementById('table-subscribers-body');
-            subBody.innerHTML = systemData.subscribers.length === 0 ? 
-                `<tr><td colspan="7" class="text-center p-4 text-slate-400">لا يوجد مشتركين مسجلين حالياً</td></tr>` :
-                systemData.subscribers.map(s => {
+            subBody.innerHTML = filteredSubscribers.length === 0 ? 
+                `<tr><td colspan="7" class="text-center p-4 text-slate-400">لا يوجد مشتركين يطابقون خيارات الفلترة المحجوزة</td></tr>` :
+                filteredSubscribers.map(s => {
                     const proj = systemData.projects.find(p => p.id === s.projectId);
                     
                     const feeds = s.feeds || [];
@@ -705,7 +753,7 @@
                     </tr>
                 `).join('');
 
-            // Vouchers Table مع توضيح جهة الربط (مشترك أو بريد)
+            // Vouchers Table
             const voucherBody = document.getElementById('table-vouchers-body');
             voucherBody.innerHTML = systemData.vouchers.length === 0 ?
                 `<tr><td colspan="6" class="text-center p-4 text-slate-400">لا يوجد سندات قبض أو دفع مسجلة حالياً</td></tr>` :
@@ -802,7 +850,7 @@
             }
         }
 
-        // Vouchers Handlers مع إدارة الربط للقبض والدفع
+        // Vouchers Handlers
         function handleSaveVoucher(e) {
             e.preventDefault();
             const id = document.getElementById('edit-voucher-id').value;
