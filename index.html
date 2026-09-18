@@ -81,7 +81,18 @@
         <!-- 1. DASHBOARD TAB لوحة التحكم -->
         <section id="dashboard" class="tab-content space-y-6">
             <h2 class="text-2xl font-bold text-slate-800">لوحة التحكم الرئيسية</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="dashboard-widgets"></div>
+            
+            <!-- إيرادات المشاريع والصناديق -->
+            <div class="space-y-2">
+                <h3 class="font-bold text-slate-700 text-sm">إيرادات المشاريع والصناديق المالية</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="dashboard-widgets"></div>
+            </div>
+
+            <!-- إيرادات فروع البريد المضافة حديثاً -->
+            <div class="space-y-2 pt-4">
+                <h3 class="font-bold text-slate-700 text-sm">إيرادات فروع البريد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="dashboard-post-widgets"></div>
+            </div>
         </section>
 
         <!-- 2. VIEW SUBSCRIBERS TAB مشاهدة وإدارة المشتركين -->
@@ -344,7 +355,7 @@
             </form>
         </section>
 
-        <!-- FORM ADD/EDIT SUBSCRIBER (مع دعم بريدين أو أكثر) -->
+        <!-- FORM ADD/EDIT SUBSCRIBER -->
         <section id="add-subscriber" class="tab-content hidden max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="sub-form-title">إضافة زبون جديد</h2>
             <form id="form-add-sub" onsubmit="handleSaveSubscriber(event)" class="space-y-4">
@@ -366,7 +377,6 @@
                     <select required id="sub-project-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
                 </div>
 
-                <!-- قائمة فروع البريد المغذية المزدوجة Dynamic Multi-Posts -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                     <div class="flex justify-between items-center">
                         <label class="block text-sm font-bold text-slate-700">فروع البريد المغذية وتوزيع الحزمة</label>
@@ -375,9 +385,7 @@
                         </button>
                     </div>
                     
-                    <div id="sub-posts-container" class="space-y-2">
-                        <!-- صفوف البريد تُولد هنا أوتوماتيكياً -->
-                    </div>
+                    <div id="sub-posts-container" class="space-y-2"></div>
                 </div>
 
                 <div>
@@ -427,7 +435,7 @@
 
     </main>
 
-    <!-- JavaScript - إدارة التغذية المزدوجة للبريد والبيانات تلقائياً -->
+    <!-- JavaScript - المحرك البرمجي وحساب إيرادات البريد أوتوماتيكياً -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -523,7 +531,6 @@
             }
         }
 
-        // إدراج صف جديد لاختيار بريد مغذي للمشترك
         function addPostFeedRow(postId = '', packageMb = 10, pricePerMb = 1.90) {
             const container = document.getElementById('sub-posts-container');
             const rowId = Date.now() + Math.random();
@@ -561,7 +568,6 @@
                 systemData.subscribers.map(s => {
                     const proj = systemData.projects.find(p => p.id === s.projectId);
                     
-                    // حساب إجمالي الحزمة والإيراد التجمعي للبريدين
                     const feeds = s.feeds || [];
                     const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
                     const totalRevenue = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
@@ -670,7 +676,6 @@
 
             document.getElementById('prof-sub-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
-            // قائمة الحزم المغذية من البريد المزدوج
             const pkgList = document.getElementById('prof-sub-packages-list');
             pkgList.innerHTML = feeds.map(f => {
                 const post = systemData.posts.find(p => p.id === f.postId);
@@ -839,12 +844,10 @@
             }
         }
 
-        // حفظ المشترك مع مصفوفة التغذية المزدوجة للفروع
         function handleSaveSubscriber(e) {
             e.preventDefault();
             const id = document.getElementById('edit-sub-id').value;
 
-            // استخراج كافة الفروع المغذية والميغات المدخلة
             const postSelects = document.querySelectorAll('.sub-post-id');
             const postMbs = document.querySelectorAll('.sub-post-mb');
             const postPrices = document.querySelectorAll('.sub-post-price');
@@ -895,7 +898,6 @@
             document.getElementById('sub-switch-link').value = sub.switchLink;
             document.getElementById('sub-notes').value = sub.notes;
 
-            // إعادة بناء صفوف التغذية المزدوجة للبريد
             const container = document.getElementById('sub-posts-container');
             container.innerHTML = '';
             const feeds = sub.feeds || [];
@@ -930,15 +932,20 @@
             switchTab('dashboard');
         }
 
+        // Render Dashboard & Post Revenue Widgets
         function renderDashboard() {
             const widgetsContainer = document.getElementById('dashboard-widgets');
+            const postWidgetsContainer = document.getElementById('dashboard-post-widgets');
+            
             widgetsContainer.innerHTML = '';
+            postWidgetsContainer.innerHTML = '';
 
-            if (systemData.projects.length === 0 && systemData.cashBoxes.length === 0) {
+            if (systemData.projects.length === 0 && systemData.posts.length === 0 && systemData.cashBoxes.length === 0) {
                 widgetsContainer.innerHTML = `<div class="col-span-4 p-6 bg-white rounded-xl text-center text-slate-400 border">قم بإضافة المشاريع والصناديق والزبائن للبدء بإظهار التقارير هنا.</div>`;
                 return;
             }
 
+            // 1. Project Widgets
             systemData.projects.forEach(proj => {
                 const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
                 const totalRevenue = projSubs.reduce((sum, s) => {
@@ -955,6 +962,7 @@
                 `;
             });
 
+            // 2. Cashbox Widgets
             systemData.cashBoxes.forEach(c => {
                 const receipts = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
                 const payments = systemData.vouchers.filter(v => v.cashboxId === c.id && v.type === 'دفع').reduce((sum, v) => sum + v.amount, 0);
@@ -968,6 +976,33 @@
                     </div>
                 `;
             });
+
+            // 3. Post Revenue Widgets (إيرادات بحسب البريد)
+            if (systemData.posts.length === 0) {
+                postWidgetsContainer.innerHTML = `<div class="col-span-4 p-4 bg-white rounded-xl text-center text-slate-400 border text-xs">لا يوجد فروع بريد مسجلة.</div>`;
+            } else {
+                systemData.posts.forEach(post => {
+                    let totalPostRev = 0;
+                    let totalPostMb = 0;
+
+                    systemData.subscribers.forEach(sub => {
+                        (sub.feeds || []).forEach(f => {
+                            if (f.postId === post.id) {
+                                totalPostMb += (f.packageMb || 0);
+                                totalPostRev += (f.packageMb || 0) * (f.pricePerMb || 0);
+                            }
+                        });
+                    });
+
+                    postWidgetsContainer.innerHTML += `
+                        <div class="bg-gradient-to-br from-sky-600 to-sky-700 text-white p-4 rounded-xl shadow-sm">
+                            <span class="text-xs font-bold block opacity-80">إيراد ${post.name}</span>
+                            <span class="text-2xl font-black">${totalPostRev.toFixed(2)} $</span>
+                            <span class="text-xs block mt-2 opacity-90">الميغات المسحوبة: ${totalPostMb} Mbps</span>
+                        </div>
+                    `;
+                });
+            }
         }
 
         function calculateUpgrade() {
@@ -1002,7 +1037,7 @@
             const totalCost = ((mbAmount * avgPrice) / 30) * daysLeft;
 
             if (sub.feeds && sub.feeds.length > 0) {
-                sub.feeds[0].packageMb += mbAmount; // إدراج الزيادة على البريد الرئيسي الأوّل
+                sub.feeds[0].packageMb += mbAmount;
             }
 
             sub.debt = (sub.debt || 0) + totalCost;
