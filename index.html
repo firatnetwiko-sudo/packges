@@ -93,7 +93,7 @@
             </div>
         </section>
 
-        <!-- 2. VIEW SUBSCRIBERS TAB مع شريط الفلترة المضاف -->
+        <!-- 2. VIEW SUBSCRIBERS TAB مع عداد نتائج الفلترة المضاف -->
         <section id="view-subscribers" class="tab-content hidden space-y-4">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 flex-wrap gap-2">
                 <h2 class="text-xl font-bold text-slate-800">قائمة المشتركين المسجلين</h2>
@@ -105,24 +105,32 @@
                 </div>
             </div>
 
-            <!-- شريط الفلترة الديناميكي -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
-                <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <i class="fa-solid fa-filter text-amber-500"></i> فلترة المشتركين:
+            <!-- شريط الفلترة الديناميكي المحدث بعداد النتائج -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-4 items-center flex-1">
+                    <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <i class="fa-solid fa-filter text-amber-500"></i> فلترة المشتركين:
+                    </div>
+                    <div class="w-48">
+                        <select id="filter-project" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- تُملأ قائمة المشاريع للفلترة أوتوماتيكياً -->
+                        </select>
+                    </div>
+                    <div class="w-48">
+                        <select id="filter-post" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- تُملأ قائمة البريد للفلترة أوتوماتيكياً -->
+                        </select>
+                    </div>
+                    <button onclick="resetSubscribersFilter()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> إظهار الكل
+                    </button>
                 </div>
-                <div class="flex-1 min-w-[200px]">
-                    <select id="filter-project" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
-                        <!-- تُملأ قائمة المشاريع للفلترة أوتوماتيكياً -->
-                    </select>
+
+                <!-- عداد احتساب النتائج المضاف -->
+                <div class="bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-lg text-amber-900 text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span>عدد النتائج:</span>
+                    <span id="subscribers-count" class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-xs font-black">0</span>
                 </div>
-                <div class="flex-1 min-w-[200px]">
-                    <select id="filter-post" onchange="renderTables()" class="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
-                        <!-- تُملأ قائمة البريد للفلترة أوتوماتيكياً -->
-                    </select>
-                </div>
-                <button onclick="resetSubscribersFilter()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 flex items-center gap-1">
-                    <i class="fa-solid fa-xmark"></i> إعادة ضبط
-                </button>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto p-4">
@@ -473,7 +481,7 @@
 
     </main>
 
-    <!-- JavaScript - المحرك البرمجي وخاصية الفلترة الديناميكية -->
+    <!-- JavaScript - إدارة وتحديث العداد تلقائياً مع الفلترة -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -677,7 +685,7 @@
         }
 
         function renderTables() {
-            // الفلترة الديناميكية للمشتركين بحسب المشروع والبريد
+            // الفلترة الديناميكية
             const selectedProjId = document.getElementById('filter-project') ? document.getElementById('filter-project').value : 'all';
             const selectedPostId = document.getElementById('filter-post') ? document.getElementById('filter-post').value : 'all';
 
@@ -686,6 +694,12 @@
                 const matchPost = (selectedPostId === 'all' || (sub.feeds || []).some(f => f.postId == selectedPostId));
                 return matchProject && matchPost;
             });
+
+            // تحديث العداد الديناميكي لعدد النتائج
+            const countEl = document.getElementById('subscribers-count');
+            if (countEl) {
+                countEl.innerText = filteredSubscribers.length;
+            }
 
             // Subscribers Table
             const subBody = document.getElementById('table-subscribers-body');
