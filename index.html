@@ -97,9 +97,8 @@
                             <th class="p-2">الاسم</th>
                             <th class="p-2">الهاتف</th>
                             <th class="p-2">المشروع</th>
-                            <th class="p-2">البريد المغذي</th>
-                            <th class="p-2">سعر الميغا</th>
-                            <th class="p-2">الحزمة</th>
+                            <th class="p-2">فروع البريد المغذية</th>
+                            <th class="p-2">الحزمة الكلية</th>
                             <th class="p-2">الإيراد الشهري</th>
                             <th class="p-2">العمليات</th>
                         </tr>
@@ -114,7 +113,7 @@
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-800" id="prof-sub-name">اسم المشترك</h2>
-                    <span class="text-xs text-slate-500" id="prof-sub-project-post">المشروع والبريد</span>
+                    <span class="text-xs text-slate-500" id="prof-sub-project">المشروع</span>
                 </div>
                 <button onclick="switchTab('view-subscribers')" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300">العودة للقائمة</button>
             </div>
@@ -125,7 +124,7 @@
                     <span id="prof-sub-phone" class="font-bold text-slate-800"></span>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span class="text-xs text-slate-500 block">الحزمة والسعر</span>
+                    <span class="text-xs text-slate-500 block">إجمالي الحزمة الكلية</span>
                     <span id="prof-sub-package" class="font-bold text-sky-600"></span>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -141,15 +140,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <h3 class="font-bold text-slate-800 mb-3 border-b pb-2 flex items-center justify-between">
-                        <span>تثبيت وترقيات الحزمة</span>
+                        <span>تغذية الحزمة من البريد</span>
                         <i class="fa-solid fa-box-archive text-amber-500"></i>
                     </h3>
                     <table class="w-full text-sm text-right">
                         <thead class="bg-slate-50 border-b">
                             <tr>
-                                <th class="p-2">الحزمة المثبتة</th>
+                                <th class="p-2">فرع البريد المغذي</th>
+                                <th class="p-2">الميغات المسحوبة</th>
                                 <th class="p-2">سعر الميغا</th>
-                                <th class="p-2">القيمة / الإيراد</th>
+                                <th class="p-2">الإيراد</th>
                             </tr>
                         </thead>
                         <tbody id="prof-sub-packages-list" class="divide-y divide-slate-100"></tbody>
@@ -327,7 +327,7 @@
             </form>
         </section>
 
-        <!-- FORM ADD/EDIT POST (بدون خانة المشروع التابع له) -->
+        <!-- FORM ADD/EDIT POST -->
         <section id="add-post" class="tab-content hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="post-form-title">إضافة فرع بريد جديد</h2>
             <form id="form-add-post" onsubmit="handleSavePost(event)" class="space-y-4">
@@ -344,44 +344,53 @@
             </form>
         </section>
 
-        <!-- FORM ADD/EDIT SUBSCRIBER -->
-        <section id="add-subscriber" class="tab-content hidden max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <!-- FORM ADD/EDIT SUBSCRIBER (مع دعم بريدين أو أكثر) -->
+        <section id="add-subscriber" class="tab-content hidden max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2" id="sub-form-title">إضافة زبون جديد</h2>
-            <form id="form-add-sub" onsubmit="handleSaveSubscriber(event)" class="grid grid-cols-2 gap-4">
+            <form id="form-add-sub" onsubmit="handleSaveSubscriber(event)" class="space-y-4">
                 <input type="hidden" id="edit-sub-id">
-                <div>
-                    <label class="block text-sm font-medium mb-1">اسم الزبون</label>
-                    <input type="text" required id="sub-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">اسم الزبون</label>
+                        <input type="text" required id="sub-name" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">رقم الهاتف</label>
+                        <input type="text" required id="sub-phone" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-sm font-medium mb-1">رقم الهاتف</label>
-                    <input type="text" required id="sub-phone" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">المشروع</label>
+                    <label class="block text-sm font-medium mb-1">المشروع التابع له</label>
                     <select required id="sub-project-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">البريد المغذي له</label>
-                    <select required id="sub-post-select" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"></select>
+
+                <!-- قائمة فروع البريد المغذية المزدوجة Dynamic Multi-Posts -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-sm font-bold text-slate-700">فروع البريد المغذية وتوزيع الحزمة</label>
+                        <button type="button" onclick="addPostFeedRow()" class="text-xs bg-sky-600 text-white font-bold px-2.5 py-1 rounded hover:bg-sky-500">
+                            + إضافة بريد مغذي آخر
+                        </button>
+                    </div>
+                    
+                    <div id="sub-posts-container" class="space-y-2">
+                        <!-- صفوف البريد تُولد هنا أوتوماتيكياً -->
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-sm font-medium mb-1">سعر الميغا ($)</label>
-                    <input type="number" step="0.01" required id="sub-price-per-mb" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" value="1.90">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">حجم الحزمة (Mbps)</label>
-                    <input type="number" required id="sub-package-size" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" value="10">
-                </div>
-                <div class="col-span-2">
                     <label class="block text-sm font-medium mb-1">رابط السويتش</label>
                     <input type="text" id="sub-switch-link" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
-                <div class="col-span-2">
+
+                <div>
                     <label class="block text-sm font-medium mb-1">ملاحظات</label>
                     <textarea id="sub-notes" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" rows="2"></textarea>
                 </div>
-                <button type="submit" class="col-span-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg transition">حفظ البيانات وتثبيت الحزمة</button>
+
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg transition">حفظ البيانات وتثبيت الحزمة</button>
             </form>
         </section>
 
@@ -404,7 +413,7 @@
                     </div>
                 </div>
                 <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-2 text-sm text-amber-900">
-                    <div class="flex justify-between"><span>سعر الميغا للزبون:</span> <span id="calc-price-mb" class="font-bold">$0.00</span></div>
+                    <div class="flex justify-between"><span>متوسط سعر الميغا للزبون:</span> <span id="calc-price-mb" class="font-bold">$0.00</span></div>
                     <div class="flex justify-between"><span>الأيام المتبقية لنهاية الشهر:</span> <span id="calc-days-left" class="font-bold">25 يوم</span></div>
                     <hr class="border-amber-200">
                     <div class="flex justify-between text-base font-bold">
@@ -418,7 +427,7 @@
 
     </main>
 
-    <!-- JavaScript - إدارة التخزين المحلي والبيانات أوتوماتيكياً -->
+    <!-- JavaScript - إدارة التغذية المزدوجة للبريد والبيانات تلقائياً -->
     <script>
         const STORAGE_KEY = 'ISP_SYSTEM_DATA_V1';
 
@@ -472,6 +481,9 @@
             populateDropdowns();
             renderTables();
             if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'add-subscriber' && document.getElementById('sub-posts-container').children.length === 0) {
+                addPostFeedRow();
+            }
         }
 
         window.onload = function() {
@@ -492,11 +504,6 @@
                 projSelect.innerHTML = systemData.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             }
 
-            const postSelect = document.getElementById('sub-post-select');
-            if (postSelect) {
-                postSelect.innerHTML = systemData.posts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            }
-
             const cashSelect = document.getElementById('voucher-cashbox-select');
             if (cashSelect) {
                 cashSelect.innerHTML = systemData.cashBoxes.map(c => `<option value="${c.id}">${c.name} (${c.currency})</option>`).join('');
@@ -509,7 +516,40 @@
 
             const upSubSelect = document.getElementById('upgrade-sub-select');
             if(upSubSelect) {
-                upSubSelect.innerHTML = systemData.subscribers.map(s => `<option value="${s.id}">${s.name} (${s.packageMb} Mbps)</option>`).join('');
+                upSubSelect.innerHTML = systemData.subscribers.map(s => {
+                    const totalMb = (s.feeds || []).reduce((sum, f) => sum + (f.packageMb || 0), 0);
+                    return `<option value="${s.id}">${s.name} (${totalMb} Mbps)</option>`;
+                }).join('');
+            }
+        }
+
+        // إدراج صف جديد لاختيار بريد مغذي للمشترك
+        function addPostFeedRow(postId = '', packageMb = 10, pricePerMb = 1.90) {
+            const container = document.getElementById('sub-posts-container');
+            const rowId = Date.now() + Math.random();
+            const postOptions = systemData.posts.map(p => `<option value="${p.id}" ${p.id == postId ? 'selected' : ''}>${p.name}</option>`).join('');
+
+            const html = `
+                <div id="post-row-${rowId}" class="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-slate-200">
+                    <select required class="sub-post-id flex-1 p-2 border rounded-lg text-sm outline-none">
+                        ${postOptions || '<option value="">لا يوجد فروع بريد</option>'}
+                    </select>
+                    <input type="number" required class="sub-post-mb w-24 p-2 border rounded-lg text-sm outline-none" placeholder="الحزمة" value="${packageMb}">
+                    <span class="text-xs font-bold text-slate-500">Mbps</span>
+                    <input type="number" step="0.01" required class="sub-post-price w-24 p-2 border rounded-lg text-sm outline-none" placeholder="السعر" value="${pricePerMb}">
+                    <span class="text-xs font-bold text-slate-500">$</span>
+                    <button type="button" onclick="removePostFeedRow('post-row-${rowId}')" class="text-rose-600 hover:text-rose-800 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removePostFeedRow(rowId) {
+            const container = document.getElementById('sub-posts-container');
+            if (container.children.length > 1) {
+                document.getElementById(rowId).remove();
+            } else {
+                alert('يجب الإبقاء على بريد مغذي واحد على الأقل للمشترك.');
             }
         }
 
@@ -517,19 +557,28 @@
             // Subscribers Table
             const subBody = document.getElementById('table-subscribers-body');
             subBody.innerHTML = systemData.subscribers.length === 0 ? 
-                `<tr><td colspan="8" class="text-center p-4 text-slate-400">لا يوجد مشتركين مسجلين حالياً</td></tr>` :
+                `<tr><td colspan="7" class="text-center p-4 text-slate-400">لا يوجد مشتركين مسجلين حالياً</td></tr>` :
                 systemData.subscribers.map(s => {
                     const proj = systemData.projects.find(p => p.id === s.projectId);
-                    const post = systemData.posts.find(p => p.id === s.postId);
+                    
+                    // حساب إجمالي الحزمة والإيراد التجمعي للبريدين
+                    const feeds = s.feeds || [];
+                    const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
+                    const totalRevenue = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
+
+                    const postNames = feeds.map(f => {
+                        const p = systemData.posts.find(post => post.id === f.postId);
+                        return p ? `<span class="bg-sky-100 text-sky-800 text-xs px-2 py-0.5 rounded font-bold">${p.name} (${f.packageMb}M)</span>` : '';
+                    }).join(' ');
+
                     return `
                         <tr>
                             <td class="p-2"><button onclick="viewSubscriberProfile(${s.id})" class="font-bold text-amber-600 hover:underline">${s.name}</button></td>
                             <td class="p-2">${s.phone}</td>
                             <td class="p-2">${proj ? proj.name : '-'}</td>
-                            <td class="p-2">${post ? post.name : '-'}</td>
-                            <td class="p-2">$${s.pricePerMb}</td>
-                            <td class="p-2 font-bold">${s.packageMb} Mbps</td>
-                            <td class="p-2 text-emerald-600 font-bold">$${(s.packageMb * s.pricePerMb).toFixed(2)}</td>
+                            <td class="p-2 space-x-1 space-x-reverse">${postNames || '-'}</td>
+                            <td class="p-2 font-bold text-sky-600">${totalMb} Mbps</td>
+                            <td class="p-2 text-emerald-600 font-bold">$${totalRevenue.toFixed(2)}</td>
                             <td class="p-2 space-x-2 space-x-reverse">
                                 <button onclick="viewSubscriberProfile(${s.id})" class="text-amber-500 hover:text-amber-700" title="مشاهدة البروفايل"><i class="fa-solid fa-eye"></i></button>
                                 <button onclick="editSubscriber(${s.id})" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -539,7 +588,7 @@
                     `;
                 }).join('');
 
-            // Posts Table (بدون خانة المشروع التابع له)
+            // Posts Table
             const postBody = document.getElementById('table-posts-body');
             postBody.innerHTML = systemData.posts.length === 0 ?
                 `<tr><td colspan="3" class="text-center p-4 text-slate-400">لا يوجد فروع بريد مسجلة حالياً</td></tr>` :
@@ -599,12 +648,15 @@
             if (!sub) return;
 
             const proj = systemData.projects.find(p => p.id === sub.projectId);
-            const post = systemData.posts.find(p => p.id === sub.postId);
+            const feeds = sub.feeds || [];
+
+            const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
+            const totalMonthlyRevenue = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
 
             document.getElementById('prof-sub-name').innerText = sub.name;
-            document.getElementById('prof-sub-project-post').innerText = `${proj ? proj.name : ''} / ${post ? post.name : ''}`;
+            document.getElementById('prof-sub-project').innerText = proj ? proj.name : '';
             document.getElementById('prof-sub-phone').innerText = sub.phone;
-            document.getElementById('prof-sub-package').innerText = `${sub.packageMb} Mbps (بسعر $${sub.pricePerMb}/ميغا)`;
+            document.getElementById('prof-sub-package').innerText = `${totalMb} Mbps (إجمالي الإيراد: $${totalMonthlyRevenue.toFixed(2)})`;
             
             const linkEl = document.getElementById('prof-sub-link');
             linkEl.innerText = sub.switchLink || 'لا يوجد رابط';
@@ -613,20 +665,25 @@
             const subVouchers = systemData.vouchers.filter(v => v.subId === subId);
             const totalPaid = subVouchers.filter(v => v.type === 'قبض').reduce((sum, v) => sum + v.amount, 0);
             
-            const monthlyCost = sub.packageMb * sub.pricePerMb;
-            const totalDue = monthlyCost + (sub.debt || 0);
+            const totalDue = totalMonthlyRevenue + (sub.debt || 0);
             const remainingDebt = totalDue - totalPaid;
 
             document.getElementById('prof-sub-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
+            // قائمة الحزم المغذية من البريد المزدوج
             const pkgList = document.getElementById('prof-sub-packages-list');
-            pkgList.innerHTML = `
-                <tr>
-                    <td class="p-2 font-bold">${sub.packageMb} Mbps</td>
-                    <td class="p-2">$${sub.pricePerMb}</td>
-                    <td class="p-2 font-bold text-emerald-600">$${monthlyCost.toFixed(2)}</td>
-                </tr>
-            `;
+            pkgList.innerHTML = feeds.map(f => {
+                const post = systemData.posts.find(p => p.id === f.postId);
+                const feedRev = (f.packageMb || 0) * (f.pricePerMb || 0);
+                return `
+                    <tr>
+                        <td class="p-2 font-bold">${post ? post.name : '-'}</td>
+                        <td class="p-2 font-bold text-sky-600">${f.packageMb} Mbps</td>
+                        <td class="p-2">$${f.pricePerMb}</td>
+                        <td class="p-2 font-bold text-emerald-600">$${feedRev.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
 
             const payList = document.getElementById('prof-sub-payments-list');
             payList.innerHTML = subVouchers.length === 0 ? 
@@ -745,7 +802,6 @@
             }
         }
 
-        // Post Handlers (بدون حقل المشروع)
         function handleSavePost(e) {
             e.preventDefault();
             const id = document.getElementById('edit-post-id').value;
@@ -783,17 +839,31 @@
             }
         }
 
+        // حفظ المشترك مع مصفوفة التغذية المزدوجة للفروع
         function handleSaveSubscriber(e) {
             e.preventDefault();
             const id = document.getElementById('edit-sub-id').value;
+
+            // استخراج كافة الفروع المغذية والميغات المدخلة
+            const postSelects = document.querySelectorAll('.sub-post-id');
+            const postMbs = document.querySelectorAll('.sub-post-mb');
+            const postPrices = document.querySelectorAll('.sub-post-price');
+
+            const feeds = [];
+            postSelects.forEach((sel, index) => {
+                feeds.push({
+                    postId: parseInt(sel.value),
+                    packageMb: parseInt(postMbs[index].value) || 0,
+                    pricePerMb: parseFloat(postPrices[index].value) || 0
+                });
+            });
+
             if (id) {
                 const sub = systemData.subscribers.find(s => s.id == id);
                 sub.name = document.getElementById('sub-name').value;
                 sub.phone = document.getElementById('sub-phone').value;
                 sub.projectId = parseInt(document.getElementById('sub-project-select').value);
-                sub.postId = parseInt(document.getElementById('sub-post-select').value);
-                sub.pricePerMb = parseFloat(document.getElementById('sub-price-per-mb').value);
-                sub.packageMb = parseInt(document.getElementById('sub-package-size').value);
+                sub.feeds = feeds;
                 sub.switchLink = document.getElementById('sub-switch-link').value;
                 sub.notes = document.getElementById('sub-notes').value;
             } else {
@@ -802,9 +872,7 @@
                     name: document.getElementById('sub-name').value,
                     phone: document.getElementById('sub-phone').value,
                     projectId: parseInt(document.getElementById('sub-project-select').value),
-                    postId: parseInt(document.getElementById('sub-post-select').value),
-                    pricePerMb: parseFloat(document.getElementById('sub-price-per-mb').value),
-                    packageMb: parseInt(document.getElementById('sub-package-size').value),
+                    feeds: feeds,
                     switchLink: document.getElementById('sub-switch-link').value,
                     notes: document.getElementById('sub-notes').value,
                     debt: 0
@@ -813,6 +881,7 @@
             saveDataToStorage();
             e.target.reset();
             document.getElementById('edit-sub-id').value = '';
+            document.getElementById('sub-posts-container').innerHTML = '';
             switchTab('view-subscribers');
         }
 
@@ -823,11 +892,19 @@
             document.getElementById('sub-name').value = sub.name;
             document.getElementById('sub-phone').value = sub.phone;
             document.getElementById('sub-project-select').value = sub.projectId;
-            document.getElementById('sub-post-select').value = sub.postId;
-            document.getElementById('sub-price-per-mb').value = sub.pricePerMb;
-            document.getElementById('sub-package-size').value = sub.packageMb;
             document.getElementById('sub-switch-link').value = sub.switchLink;
             document.getElementById('sub-notes').value = sub.notes;
+
+            // إعادة بناء صفوف التغذية المزدوجة للبريد
+            const container = document.getElementById('sub-posts-container');
+            container.innerHTML = '';
+            const feeds = sub.feeds || [];
+            if (feeds.length > 0) {
+                feeds.forEach(f => addPostFeedRow(f.postId, f.packageMb, f.pricePerMb));
+            } else {
+                addPostFeedRow();
+            }
+
             switchTab('add-subscriber');
         }
 
@@ -864,7 +941,10 @@
 
             systemData.projects.forEach(proj => {
                 const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
-                const totalRevenue = projSubs.reduce((sum, s) => sum + (s.packageMb * s.pricePerMb), 0);
+                const totalRevenue = projSubs.reduce((sum, s) => {
+                    const feeds = s.feeds || [];
+                    return sum + feeds.reduce((fSum, f) => fSum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
+                }, 0);
                 
                 widgetsContainer.innerHTML += `
                     <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 p-4 rounded-xl shadow-sm">
@@ -895,12 +975,15 @@
             const sub = systemData.subscribers.find(s => s.id === subId);
             if (!sub) return;
 
+            const feeds = sub.feeds || [];
+            const avgPrice = feeds.length > 0 ? (feeds.reduce((sum, f) => sum + (f.pricePerMb || 0), 0) / feeds.length) : 1.90;
+
             const mbAmount = parseFloat(document.getElementById('upgrade-mb-amount').value) || 0;
             const currentDay = parseInt(document.getElementById('upgrade-current-day').value) || 1;
             const daysLeft = Math.max(0, 30 - currentDay);
-            const totalCost = ((mbAmount * sub.pricePerMb) / 30) * daysLeft;
+            const totalCost = ((mbAmount * avgPrice) / 30) * daysLeft;
 
-            document.getElementById('calc-price-mb').innerText = `$${sub.pricePerMb.toFixed(2)}`;
+            document.getElementById('calc-price-mb').innerText = `$${avgPrice.toFixed(2)}`;
             document.getElementById('calc-days-left').innerText = `${daysLeft} يوم`;
             document.getElementById('calc-total-cost').innerText = `$${totalCost.toFixed(2)}`;
         }
@@ -908,18 +991,24 @@
         function confirmUpgrade() {
             const subId = parseInt(document.getElementById('upgrade-sub-select').value);
             const sub = systemData.subscribers.find(s => s.id === subId);
+            if (!sub) return;
+
+            const feeds = sub.feeds || [];
+            const avgPrice = feeds.length > 0 ? (feeds.reduce((sum, f) => sum + (f.pricePerMb || 0), 0) / feeds.length) : 1.90;
+
             const mbAmount = parseFloat(document.getElementById('upgrade-mb-amount').value) || 0;
             const currentDay = parseInt(document.getElementById('upgrade-current-day').value) || 1;
             const daysLeft = Math.max(0, 30 - currentDay);
-            const totalCost = ((mbAmount * sub.pricePerMb) / 30) * daysLeft;
+            const totalCost = ((mbAmount * avgPrice) / 30) * daysLeft;
 
-            if (sub) {
-                sub.packageMb += mbAmount;
-                sub.debt = (sub.debt || 0) + totalCost;
-                saveDataToStorage();
-                alert(`تم رفع حزمة المشترك ${sub.name} بمقدار ${mbAmount} Mbps وترحيل مبلغ $${totalCost.toFixed(2)} إلى حسابه.`);
-                switchTab('view-subscribers');
+            if (sub.feeds && sub.feeds.length > 0) {
+                sub.feeds[0].packageMb += mbAmount; // إدراج الزيادة على البريد الرئيسي الأوّل
             }
+
+            sub.debt = (sub.debt || 0) + totalCost;
+            saveDataToStorage();
+            alert(`تم رفع حزمة المشترك ${sub.name} بمقدار ${mbAmount} Mbps وترحيل مبلغ $${totalCost.toFixed(2)} إلى حسابه.`);
+            switchTab('view-subscribers');
         }
 
         function exportMonthlyReport() {
@@ -931,13 +1020,17 @@
 
             systemData.projects.forEach(proj => {
                 const projSubs = systemData.subscribers.filter(s => s.projectId === proj.id);
-                const data = projSubs.map(s => ({
-                    "اسم الزبون": s.name,
-                    "رقم الهاتف": s.phone,
-                    "الحزمة المثبتة (Mbps)": s.packageMb,
-                    "سعر الميغا ($)": s.pricePerMb,
-                    "مجموع الإيراد ($)": s.packageMb * s.pricePerMb
-                }));
+                const data = projSubs.map(s => {
+                    const feeds = s.feeds || [];
+                    const totalMb = feeds.reduce((sum, f) => sum + (f.packageMb || 0), 0);
+                    const totalRev = feeds.reduce((sum, f) => sum + ((f.packageMb || 0) * (f.pricePerMb || 0)), 0);
+                    return {
+                        "اسم الزبون": s.name,
+                        "رقم الهاتف": s.phone,
+                        "إجمالي الحزمة (Mbps)": totalMb,
+                        "مجموع الإيراد الشهري ($)": totalRev
+                    };
+                });
                 const ws = XLSX.utils.json_to_sheet(data);
                 XLSX.utils.book_append_sheet(wb, ws, proj.name.substring(0, 30));
             });
